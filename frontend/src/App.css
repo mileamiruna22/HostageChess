@@ -1,38 +1,116 @@
+/* src/App.css */
 .App {
   text-align: center;
+  font-family: Arial, sans-serif;
 }
 
-.App-logo {
-  height: 40vmin;
-  pointer-events: none;
+.game-container {
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  margin: 20px;
 }
 
-@media (prefers-reduced-motion: no-preference) {
-  .App-logo {
-    animation: App-logo-spin infinite 20s linear;
-  }
-}
-
-.App-header {
-  background-color: #282c34;
-  min-height: 100vh;
+.board-container {
   display: flex;
   flex-direction: column;
   align-items: center;
+}
+
+.board {
+  display: grid;
+  grid-template-columns: repeat(8, 50px);
+  grid-template-rows: repeat(8, 50px);
+  border: 2px solid #333;
+}
+
+.square {
+  width: 50px;
+  height: 50px;
+  display: flex;
   justify-content: center;
-  font-size: calc(10px + 2vmin);
+  align-items: center;
+  font-size: 32px;
+  cursor: pointer;
+}
+
+.light {
+  background-color: #f0d9b5;
+}
+
+.dark {
+  background-color: #b58863;
+}
+
+.selected {
+  background-color: #7fc97f;
+}
+
+.piece {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.hostages {
+  margin: 0 20px;
+  padding: 10px;
+  border: 1px solid #ccc;
+  min-width: 100px;
+  min-height: 400px;
+  display: flex;
+  flex-direction: column;
+}
+
+.hostages h3 {
+  margin-top: 0;
+}
+
+.hostages-list {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.hostage {
+  width: 40px;
+  height: 40px;
+  margin: 5px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-size: 28px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+}
+
+.hostage.active {
+  cursor: pointer;
+  background-color: #f0f0f0;
+}
+
+.hostage.active:hover {
+  background-color: #e0e0e0;
+}
+
+.status {
+  margin: 10px 0;
+  font-weight: bold;
+}
+
+.reset-button {
+  margin: 10px 0;
+  padding: 8px 16px;
+  font-size: 16px;
+  background-color: #4CAF50;
   color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
 }
 
-.App-link {
-  color: #61dafb;
-}
-
-@keyframes App-logo-spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
+.reset-button:hover {
+  background-color: #45a049;
 }
