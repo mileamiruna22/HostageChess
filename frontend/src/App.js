@@ -2,8 +2,13 @@
 import React, { useState, useEffect } from 'react';
 import { Chess } from 'chess.js';
 import './App.css';
+import HomePage from './homePage';
 
 function App() {
+  // Adăugăm starea pentru a controla dacă jocul a început
+  const [gameStarted, setGameStarted] = useState(false);
+  const [gameMode, setGameMode] = useState(null);
+
   // Game state
   const [game, setGame] = useState(new Chess());
   const [selectedSquare, setSelectedSquare] = useState(null);
@@ -31,6 +36,13 @@ function App() {
     'r': 5,
     'q': 9,
     'k': Infinity
+  };
+
+  // Handler pentru începerea jocului
+  const handleGameStart = (mode) => {
+    setGameMode(mode);
+    setGameStarted(true);
+    resetGame();
   };
 
   // Initialize the game
@@ -416,31 +428,50 @@ function App() {
           >
             Cancel Selection
           </button>
+          <button
+            className="mode-button"
+            onClick={() => {
+              setGameStarted(false);
+              setGameMode(null);
+            }}
+            style={{ backgroundColor: '#2196F3' }}
+          >
+            Back to Home
+          </button>
         </div>
         {renderMoveHistory()}
       </div>
     );
   };
 
+  // Renderea condiționată a HomePage sau ChessGame
   return (
     <div className="App">
-      <h1>Hostage Chess</h1>
-      <div className="game-container">
-        <div className="left-panel">
-          {renderHostages('b')}
-          {renderReserves('w')}
-        </div>
-        <div className="center-panel">
-          <div className="board-container">
-            {renderBoard()}
+      {!gameStarted ? (
+        // Afisăm HomePage dacă jocul nu a început
+        <HomePage onGameStart={handleGameStart} />
+      ) : (
+        // Afișăm interfața jocului dacă jocul a început
+        <>
+          <h1>Hostage Chess</h1>
+          <div className="game-container">
+            <div className="left-panel">
+              {renderHostages('b')}
+              {renderReserves('w')}
+            </div>
+            <div className="center-panel">
+              <div className="board-container">
+                {renderBoard()}
+              </div>
+              {renderGameInfo()}
+            </div>
+            <div className="right-panel">
+              {renderHostages('w')}
+              {renderReserves('b')}
+            </div>
           </div>
-          {renderGameInfo()}
-        </div>
-        <div className="right-panel">
-          {renderHostages('w')}
-          {renderReserves('b')}
-        </div>
-      </div>
+        </>
+      )}
     </div>
   );
 }
