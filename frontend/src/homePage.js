@@ -1,20 +1,58 @@
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
 import './homePage.css';
 
 const HomePage = ({ onGameStart }) => {
+  const chessPiecesRef = useRef([]);
+  
+  useEffect(() => {
+    // Animation for chess pieces
+    if (chessPiecesRef.current.length > 0) {
+      chessPiecesRef.current.forEach((piece, index) => {
+        setTimeout(() => {
+          if (piece) {
+            piece.style.opacity = '0';
+            piece.style.transform = 'translateY(-20px)';
+            
+            setTimeout(() => {
+              piece.style.transition = 'all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275)';
+              piece.style.opacity = '1';
+              piece.style.transform = 'translateY(0)';
+            }, 100);
+          }
+        }, index * 150);
+      });
+    }
+  }, []);
+
+  const addPieceRef = (el) => {
+    if (el && !chessPiecesRef.current.includes(el)) {
+      chessPiecesRef.current.push(el);
+    }
+  };
+
   return (
     <div className="home-container">
       <div className="home-content">
-        <h1 className="game-title">Hostage Chess</h1>
-        <div className="chess-decoration">
-          <div className="chess-piece knight"></div>
-          <div className="chess-piece rook"></div>
-          <div className="chess-piece queen"></div>
-          <div className="chess-piece king"></div>
-          <div className="chess-piece bishop"></div>
-          <div className="chess-piece pawn"></div>
+        <div className="chess-animation">
+          <div className="chess-bg-piece king-bg"></div>
+          <div className="chess-bg-piece queen-bg"></div>
         </div>
+        
+        <h1 className="game-title">Hostage Chess</h1>
+        
+        <div className="chess-decoration">
+          <div className="chess-piece knight" ref={addPieceRef}></div>
+          <div className="chess-piece rook" ref={addPieceRef}></div>
+          <div className="chess-piece queen" ref={addPieceRef}></div>
+          <div className="chess-piece king" ref={addPieceRef}></div>
+          <div className="chess-piece bishop" ref={addPieceRef}></div>
+          <div className="chess-piece pawn" ref={addPieceRef}></div>
+        </div>
+        
+        <div className="board-pattern"></div>
+        
         <h2 className="welcome-text">Welcome to the ultimate chess experience</h2>
+        
         <div className="game-modes">
           <button 
             className="game-mode-btn" 
@@ -31,8 +69,11 @@ const HomePage = ({ onGameStart }) => {
             <span>Play against Computer</span>
           </button>
         </div>
+        
         <div className="footer">
           <p>Select your game mode to begin</p>
+          <p>&copy; 2025 Hostage Chess. All rights reserved.</p>
+          <p><a href="/rules">Rules</a></p>
         </div>
       </div>
     </div>
