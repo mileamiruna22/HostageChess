@@ -1,34 +1,31 @@
-// src/App.js
 import React, { useState, useEffect } from 'react';
 import { Chess } from 'chess.js';
 import './App.css';
 import HomePage from './homePage';
 
 function App() {
-  // Adăugăm starea pentru a controla dacă jocul a început
+  // Starea jocului
   const [gameStarted, setGameStarted] = useState(false);
   const [gameMode, setGameMode] = useState(null);
-
-  // Game state
   const [game, setGame] = useState(new Chess());
   const [selectedSquare, setSelectedSquare] = useState(null);
   const [hostages, setHostages] = useState({
-    w: [], // Black pieces captured by white
-    b: []  // White pieces captured by black
+    w: [], // Piese negre capturate de alb
+    b: []  // Piese albe capturate de negru
   });
   const [reserves, setReserves] = useState({
-    w: [], // White pieces recovered
-    b: []  // Black pieces recovered
+    w: [], // Piese albe recuperate
+    b: []  // Piese negre recuperate
   });
   const [currentPlayer, setCurrentPlayer] = useState('w');
-  const [mode, setMode] = useState('normal'); // 'normal', 'drop', or 'exchange'
+  const [mode, setMode] = useState('normal'); // 'normal', 'drop', sau 'exchange'
   const [selectedPiece, setSelectedPiece] = useState(null);
   const [selectedHostageIndex, setSelectedHostageIndex] = useState(null);
   const [gameOver, setGameOver] = useState(false);
   const [status, setStatus] = useState('');
   const [moveHistory, setMoveHistory] = useState([]);
 
-  // Piece values for exchanges
+  // Valorile pieselor pentru schimburi
   const pieceValues = {
     'p': 1,
     'n': 3,
@@ -38,6 +35,11 @@ function App() {
     'k': Infinity
   };
 
+  // Inițializăm jocul
+  useEffect(() => {
+    resetGame();
+  }, []);
+
   // Handler pentru începerea jocului
   const handleGameStart = (mode) => {
     setGameMode(mode);
@@ -45,12 +47,7 @@ function App() {
     resetGame();
   };
 
-  // Initialize the game
-  useEffect(() => {
-    resetGame();
-  }, []);
-
-  // Reset game function
+  // Resetăm jocul
   const resetGame = () => {
     const newGame = new Chess();
     setGame(newGame);
@@ -66,93 +63,111 @@ function App() {
     setMoveHistory([]);
   };
 
-  // Handle square click
+  // Handler pentru clic pe un pătrat de pe tablă
   const handleSquareClick = (square) => {
     if (gameOver) return;
 
     if (mode === 'normal') {
-      // Normal move logic
-      if (selectedSquare === null) {
-        // Select piece to move
-        const piece = game.get(square);
-        if (piece && piece.color === currentPlayer) {
-          setSelectedSquare(square);
-        }
-      } else {
-        // Try to move the piece
+      // Dacă avem deja o piesă selectată, încercăm să o mutăm
+      if (selectedSquare) {
         try {
-          // Check if move is valid
-          const move = game.move({
+          // Formăm obiectul pentru mutare
+          const moveObj = {
             from: selectedSquare,
             to: square,
-            promotion: 'q' // Default promotion to queen
-          });
+            promotion: 'q' // Automat promovare la regină dacă este nevoie
+          };
 
-          if (move) {
-            // If move includes a capture, add piece to hostages
-            if (move.captured) {
-              const capturedPiece = move.captured;
-              const capturedColor = move.color === 'w' ? 'b' : 'w';
-              setHostages(prevHostages => {
-                const newHostages = { ...prevHostages };
-                newHostages[move.color].push({
+          // Verificăm și executăm mutarea
+          const moveResult = game.move(moveObj);
+          
+          // Dacă mutarea nu este validă, resetăm selecția
+          if (!moveResult) {
+            setSelectedSquare(null);
+            return;
+          }
+
+          // Creăm o nouă instanță a jocului pentru a forța re-renderul
+          const newGameState = new Chess(game.fen());
+          setGame(newGameState);
+
+          // Verificăm dacă a fost o captură
+          const capturedPiece = moveResult.captured;
+          
+          if (capturedPiece) {
+            // A avut loc o captură, întrebăm utilizatorul
+            const takeHostage = window.confirm(`Ai capturat un ${getPieceName(capturedPiece)}. Vrei să-l iei ca ostatic?`);
+            
+            if (takeHostage) {
+              // Adăugăm piesa capturată la ostatici
+              setHostages(prev => {
+                const newHostages = { ...prev };
+                newHostages[currentPlayer].push({
                   type: capturedPiece,
-                  color: capturedColor
+                  color: currentPlayer === 'w' ? 'b' : 'w'
                 });
                 return newHostages;
               });
             }
-
-            // Add move to history
-            setMoveHistory(prev => [...prev, {
-              from: move.from,
-              to: move.to,
-              piece: move.piece,
-              color: move.color,
-              captured: move.captured,
-              san: move.san
-            }]);
-
-            // Update game state
-            setSelectedSquare(null);
-            setCurrentPlayer(game.turn());
-            checkGameStatus();
-          } else {
-            // If move is invalid, reset selection
-            setSelectedSquare(null);
           }
-        } catch (e) {
-          // If error occurs, reset selection
+
+          // Adăugăm mutarea în istoric
+          setMoveHistory(prev => [...prev, {
+            from: selectedSquare,
+            to: square,
+            piece: moveResult.piece,
+            color: currentPlayer,
+            captured: capturedPiece,
+            san: game.history().pop()
+          }]);
+
+          // Actualizăm jucătorul curent
+          setCurrentPlayer(newGameState.turn());
+          
+          // Resetăm selecția
           setSelectedSquare(null);
+          
+          // Verificăm starea jocului (șah, șah mat, etc.)
+          checkGameStatus(newGameState);
+        } catch (error) {
+          console.error('Eroare la mutare:', error);
+          setSelectedSquare(null);
+        }
+      } else {
+        // Dacă nu avem o piesă selectată, verificăm dacă putem selecta o piesă de aici
+        const piece = game.get(square);
+        if (piece && piece.color === currentPlayer) {
+          setSelectedSquare(square);
         }
       }
     } else if (mode === 'drop') {
-      // Logic for dropping a piece from reserves
-      if (selectedPiece !== null) {
-        // Check if square is empty
+      // Logica pentru plasarea unei piese din rezervă
+      if (selectedPiece) {
         const pieceAtSquare = game.get(square);
+        
+        // Verificăm dacă pătratul este liber
         if (!pieceAtSquare) {
-          // This is a simplified implementation
-          // In a complete implementation, you would need to modify the chess.js library
-          // or create custom validation for dropping pieces
-          
           console.log(`Dropping ${selectedPiece.type} at ${square}`);
           
-          // Remove piece from reserves
+          // Aici ar trebui implementată logica pentru a plasa o piesă pe tablă
+          // Notă: chess.js nu are o metodă nativă pentru a plasa piese,
+          // ar trebui să creați un nou obiect board cu piesa adăugată
+          
+          // Actualizăm starea rezervelor
           setReserves(prevReserves => {
             const newReserves = { ...prevReserves };
-            newReserves[currentPlayer] = newReserves[currentPlayer].filter((_, index) => 
+            newReserves[currentPlayer] = newReserves[currentPlayer].filter((_, index) =>
               index !== selectedHostageIndex
             );
             return newReserves;
           });
           
-          // Reset mode
+          // Resetăm modul și selecția
           setMode('normal');
           setSelectedPiece(null);
           setSelectedHostageIndex(null);
           
-          // Switch player
+          // Schimbăm jucătorul
           setCurrentPlayer(currentPlayer === 'w' ? 'b' : 'w');
           setStatus(`${currentPlayer === 'w' ? 'Black' : 'White'} to move.`);
         }
@@ -160,10 +175,10 @@ function App() {
     }
   };
 
-  // Handle hostage selection for exchange
+  // Handler pentru selectarea unui ostatic pentru schimb
   const handleHostageSelect = (index) => {
     if (gameOver) return;
-    
+
     const selectedHostage = hostages[currentPlayer][index];
     setSelectedPiece(selectedHostage);
     setSelectedHostageIndex(index);
@@ -171,10 +186,10 @@ function App() {
     setStatus(`Select a piece to exchange for ${getPieceName(selectedHostage.type)}`);
   };
 
-  // Handle reserve piece selection for drop
+  // Handler pentru selectarea unei piese din rezervă pentru plasare
   const handleReserveSelect = (index) => {
     if (gameOver) return;
-    
+
     const selectedReserve = reserves[currentPlayer][index];
     setSelectedPiece(selectedReserve);
     setSelectedHostageIndex(index);
@@ -182,31 +197,31 @@ function App() {
     setStatus(`Select a square to drop ${getPieceName(selectedReserve.type)}`);
   };
 
-  // Handle exchange between hostage and own reserve
+  // Handler pentru schimbul între ostatic și rezervă a adversarului
   const handleExchangeSelect = (index) => {
     if (mode !== 'exchange' || !selectedPiece) return;
-    
+
     const targetHostage = hostages[currentPlayer === 'w' ? 'b' : 'w'][index];
-    
-    // Check if exchange is valid (selected piece value >= target piece value)
+
+    // Verifică dacă schimbul este valid (valoarea piesei selectate >= valoarea piesei țintă)
     if (pieceValues[selectedPiece.type] >= pieceValues[targetHostage.type]) {
-      // Remove selected piece from hostages
+      // Eliminăm piesa selectată din ostatici
       const newHostages = { ...hostages };
       newHostages[currentPlayer].splice(selectedHostageIndex, 1);
-      
-      // Remove target piece from opponent's hostages
+
+      // Eliminăm piesa țintă din ostaticii adversarului
       const opponentColor = currentPlayer === 'w' ? 'b' : 'w';
       const exchangedPiece = newHostages[opponentColor][index];
       newHostages[opponentColor].splice(index, 1);
-      
-      // Add exchanged piece to player's reserves
+
+      // Adăugăm piesa schimbată la rezervele jucătorului
       const newReserves = { ...reserves };
       newReserves[currentPlayer].push({
         type: exchangedPiece.type,
         color: currentPlayer
       });
-      
-      // Update state
+
+      // Actualizăm starea
       setHostages(newHostages);
       setReserves(newReserves);
       setMode('normal');
@@ -222,7 +237,7 @@ function App() {
     }
   };
 
-  // Get piece full name
+  // Obține numele complet al piesei
   const getPieceName = (type) => {
     const pieceNames = {
       'p': 'Pawn',
@@ -235,33 +250,33 @@ function App() {
     return pieceNames[type];
   };
 
-  // Check game status
-  const checkGameStatus = () => {
-    if (game.isCheckmate()) {
+  // Verificăm starea jocului
+  const checkGameStatus = (currentGameState = game) => {
+    if (currentGameState.isCheckmate()) {
       setGameOver(true);
-      setStatus(`Checkmate! ${currentPlayer === 'w' ? 'Black' : 'White'} wins!`);
-    } else if (game.isDraw()) {
+      setStatus(`Checkmate! ${currentGameState.turn() === 'w' ? 'Black' : 'White'} wins!`);
+    } else if (currentGameState.isDraw()) {
       setGameOver(true);
       setStatus('Draw!');
-    } else if (game.isCheck()) {
-      setStatus(`Check! ${currentPlayer === 'w' ? 'White' : 'Black'} is in check.`);
+    } else if (currentGameState.isCheck()) {
+      setStatus(`Check! ${currentGameState.turn() === 'w' ? 'White' : 'Black'} is in check.`);
     } else {
-      setStatus(`${currentPlayer === 'w' ? 'White' : 'Black'} to move.`);
+      setStatus(`${currentGameState.turn() === 'w' ? 'White' : 'Black'} to move.`);
     }
   };
 
-  // Render chess board
+  // Renderăm tabla de șah
   const renderBoard = () => {
     const squares = [];
     const files = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'];
     const ranks = ['8', '7', '6', '5', '4', '3', '2', '1'];
 
-    // Add rank labels
+    // Adăugăm etichetele pentru rânduri
     squares.push(
       <div key="corner" className="label corner"></div>
     );
-    
-    // Add file labels (top)
+
+    // Adăugăm etichetele pentru coloane (sus)
     for (let f = 0; f < 8; f++) {
       squares.push(
         <div key={`top-${files[f]}`} className="label file">
@@ -270,16 +285,16 @@ function App() {
       );
     }
 
-    // Add board squares with rank labels
+    // Adăugăm pătratele tablei cu etichete pentru rânduri
     for (let r = 0; r < 8; r++) {
-      // Add rank label
+      // Adăugăm eticheta rândului
       squares.push(
         <div key={`${ranks[r]}-left`} className="label rank">
           {ranks[r]}
         </div>
       );
-      
-      // Add squares for this rank
+
+      // Adăugăm pătratele pentru acest rând
       for (let f = 0; f < 8; f++) {
         const square = files[f] + ranks[r];
         const piece = game.get(square);
@@ -300,20 +315,20 @@ function App() {
           </div>
         );
       }
-      
-      // Add rank label (right side)
+
+      // Adăugăm eticheta rândului (partea dreaptă)
       squares.push(
         <div key={`${ranks[r]}-right`} className="label rank">
           {ranks[r]}
         </div>
       );
     }
-    
-    // Add file labels (bottom)
+
+    // Adăugăm etichetele pentru coloane (jos)
     squares.push(
       <div key="corner-bottom" className="label corner"></div>
     );
-    
+
     for (let f = 0; f < 8; f++) {
       squares.push(
         <div key={`bottom-${files[f]}`} className="label file">
@@ -325,7 +340,7 @@ function App() {
     return <div className="board">{squares}</div>;
   };
 
-  // Render piece
+  // Renderăm o piesă
   const renderPiece = (type, color) => {
     const pieceSymbols = {
       'p': color === 'w' ? '♙' : '♟',
@@ -338,11 +353,11 @@ function App() {
     return pieceSymbols[type];
   };
 
-  // Render hostages
+  // Renderăm ostaticii
   const renderHostages = (color) => {
     const label = color === 'w' ? 'White Hostages' : 'Black Hostages';
     const opponentColor = color === 'w' ? 'b' : 'w';
-    
+
     return (
       <div className={`hostages hostages-${color}`}>
         <h3>{label}</h3>
@@ -369,10 +384,10 @@ function App() {
     );
   };
 
-  // Render reserves
+  // Renderăm rezervele
   const renderReserves = (color) => {
     const label = color === 'w' ? 'White Reserves' : 'Black Reserves';
-    
+
     return (
       <div className={`reserves reserves-${color}`}>
         <h3>{label}</h3>
@@ -392,7 +407,7 @@ function App() {
     );
   };
 
-  // Render move history
+  
   const renderMoveHistory = () => {
     return (
       <div className="move-history">
@@ -410,15 +425,15 @@ function App() {
     );
   };
 
-  // Render game info
+  // Renderăm informațiile despre joc
   const renderGameInfo = () => {
     return (
       <div className="game-info">
         <div className="status">{status}</div>
         <div className="buttons">
           <button className="reset-button" onClick={resetGame}>Reset Game</button>
-          <button 
-            className="mode-button" 
+          <button
+            className="mode-button"
             onClick={() => {
               setMode('normal');
               setSelectedPiece(null);
@@ -444,11 +459,11 @@ function App() {
     );
   };
 
-  // Renderea condiționată a HomePage sau ChessGame
+  // Renderarea condiționată a HomePage sau ChessGame
   return (
     <div className="App">
       {!gameStarted ? (
-        // Afisăm HomePage dacă jocul nu a început
+        // Afișăm HomePage dacă jocul nu a început
         <HomePage onGameStart={handleGameStart} />
       ) : (
         // Afișăm interfața jocului dacă jocul a început

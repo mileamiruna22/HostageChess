@@ -73,7 +73,7 @@ const HomePage = ({ onGameStart }) => {
         <div className="footer">
           <p>Select your game mode to begin</p>
           <p>&copy; 2025 Hostage Chess. All rights reserved.</p>
-          <p><a href="/rules">Rules</a></p>
+          
         </div>
       </div>
     </div>
