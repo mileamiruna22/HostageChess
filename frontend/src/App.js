@@ -94,13 +94,18 @@ function App() {
               const capturedPiece = move.captured;
               const capturedColor = move.color === 'w' ? 'b' : 'w';
               setHostages(prevHostages => {
-                const newHostages = { ...prevHostages };
-                newHostages[move.color].push({
+                const newHostages = {
+                  w: [...prevHostages.w],
+                  b: [...prevHostages.b]
+                };
+                const attackerColor = move.color;
+                newHostages[attackerColor].push({
                   type: capturedPiece,
                   color: capturedColor
                 });
                 return newHostages;
               });
+              
             }
 
             // Add move to history
