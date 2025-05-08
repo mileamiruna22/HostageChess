@@ -67,6 +67,8 @@ function App() {
   };
 
   // Handle square click
+  const [legalMoves, setLegalMoves] = useState([]);
+
   const handleSquareClick = (square) => {
     if (gameOver) return;
 
@@ -77,6 +79,9 @@ function App() {
         const piece = game.get(square);
         if (piece && piece.color === currentPlayer) {
           setSelectedSquare(square);
+                          const moves = game.moves({ square, verbose: true });
+                          const destinations = moves.map(move => move.to);
+                          setLegalMoves(destinations);
         }
       } else {
         // Try to move the piece
@@ -126,6 +131,7 @@ function App() {
             // If move is invalid, reset selection
             setSelectedSquare(null);
           }
+                                      setLegalMoves([]);
         } catch (e) {
           // If error occurs, reset selection
           setSelectedSquare(null);
@@ -261,19 +267,7 @@ function App() {
     const files = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'];
     const ranks = ['8', '7', '6', '5', '4', '3', '2', '1'];
 
-    // Add rank labels
-    squares.push(
-      <div key="corner" className="label corner"></div>
-    );
-    
-    // Add file labels (top)
-    for (let f = 0; f < 8; f++) {
-      squares.push(
-        <div key={`top-${files[f]}`} className="label file">
-          {files[f]}
-        </div>
-      );
-    }
+
 
     // Add board squares with rank labels
     for (let r = 0; r < 8; r++) {
@@ -308,24 +302,22 @@ function App() {
       
       // Add rank label (right side)
       squares.push(
-        <div key={`${ranks[r]}-right`} className="label rank">
-          {ranks[r]}
-        </div>
+        <div key="corner-bottom" className="label corner"></div>
       );
+      
     }
     
     // Add file labels (bottom)
-    squares.push(
-      <div key="corner-bottom" className="label corner"></div>
-    );
-    
-    for (let f = 0; f < 8; f++) {
+    for (let f = -1; f < 8; f++) {
       squares.push(
         <div key={`bottom-${files[f]}`} className="label file">
           {files[f]}
         </div>
       );
     }
+
+    
+
 
     return <div className="board">{squares}</div>;
   };
