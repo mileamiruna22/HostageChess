@@ -11,3 +11,11 @@ code {
   font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
     monospace;
 }
+.chess-piece {
+  max-width: 40px;
+  max-height: 40px;
+  object-fit: contain;
+  display: block;
+  margin: auto;
+  pointer-events: none;
+}

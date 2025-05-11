@@ -4,6 +4,24 @@ import { Chess } from 'chess.js';
 import './App.css';
 import HomePage from './homePage';
 
+
+
+import pionAlb from './icons/pion alb.png';
+import pionNegru from './icons/pion negru.png';
+import caluAlb from './icons/calu alb.png';
+import caluNegru from './icons/calu negru.png';
+import nebunuAlb from './icons/nebunu alb.png';
+import nebunuNegru from './icons/nebunu negru.png';
+import turaAlba from './icons/tura alba.png';
+import turaNeagra from './icons/tura neagra.png';
+import reginaAlba from './icons/regina alba.png';
+import reginaNeagra from './icons/regina neagra.png';
+import regeAlb from './icons/rege alb.png';
+import regeNegru from './icons/rege negru.png';
+
+
+
+
 function App() {
   // Adăugăm starea pentru a controla dacă jocul a început
   const [gameStarted, setGameStarted] = useState(false);
@@ -12,6 +30,7 @@ function App() {
   // Game state
   const [game, setGame] = useState(new Chess());
   const [selectedSquare, setSelectedSquare] = useState(null);
+  const [isLegalMoveSquare, setLegalMoveSquare] = useState(null);
   const [hostages, setHostages] = useState({
     w: [], // Black pieces captured by white
     b: []  // White pieces captured by black
@@ -23,6 +42,7 @@ function App() {
   const [currentPlayer, setCurrentPlayer] = useState('w');
   const [mode, setMode] = useState('normal'); // 'normal', 'drop', or 'exchange'
   const [selectedPiece, setSelectedPiece] = useState(null);
+
   const [selectedHostageIndex, setSelectedHostageIndex] = useState(null);
   const [gameOver, setGameOver] = useState(false);
   const [status, setStatus] = useState('');
@@ -55,6 +75,7 @@ function App() {
     const newGame = new Chess();
     setGame(newGame);
     setSelectedSquare(null);
+    setLegalMoveSquare(null);
     setHostages({ w: [], b: [] });
     setReserves({ w: [], b: [] });
     setCurrentPlayer('w');
@@ -125,16 +146,20 @@ function App() {
 
             // Update game state
             setSelectedSquare(null);
+            setLegalMoveSquare(null);
             setCurrentPlayer(game.turn());
             checkGameStatus();
           } else {
             // If move is invalid, reset selection
             setSelectedSquare(null);
+            setLegalMoveSquare(null);
           }
                                       setLegalMoves([]);
         } catch (e) {
           // If error occurs, reset selection
           setSelectedSquare(null);
+        setLegalMoveSquare(null);
+        setLegalMoves([]);
         }
       }
     } else if (mode === 'drop') {
@@ -255,11 +280,14 @@ function App() {
       setGameOver(true);
       setStatus('Draw!');
     } else if (game.isCheck()) {
-      setStatus(`Check! ${currentPlayer === 'w' ? 'White' : 'Black'} is in check.`);
+      setStatus(`Check! ${currentPlayer === 'w' ? 'Black' : 'White'} is in check.`);
     } else {
-      setStatus(`${currentPlayer === 'w' ? 'White' : 'Black'} to move.`);
+      setStatus(`${currentPlayer === 'w' ? 'Black' : 'White'} to move.`);
     }
   };
+
+
+
 
   // Render chess board
   const renderBoard = () => {
@@ -284,12 +312,12 @@ function App() {
         const piece = game.get(square);
         const isSelected = selectedSquare === square;
         const isLight = (r + f) % 2 === 0;
-
+        const isLegalMoveSquare = legalMoves.includes(square);
         squares.push(
           <div
-            key={square}
-            className={`square ${isLight ? 'light' : 'dark'} ${isSelected ? 'selected' : ''}`}
-            onClick={() => handleSquareClick(square)}
+          key={square}
+          className={`square ${isLight ? 'light' : 'dark'} ${isSelected ? 'selected' : ''} ${isLegalMoveSquare ? 'selected' : ''}`}
+          onClick={() => handleSquareClick(square)}
           >
             {piece && (
               <div className="piece">
@@ -324,15 +352,22 @@ function App() {
 
   // Render piece
   const renderPiece = (type, color) => {
-    const pieceSymbols = {
-      'p': color === 'w' ? '♙' : '♟',
-      'n': color === 'w' ? '♘' : '♞',
-      'b': color === 'w' ? '♗' : '♝',
-      'r': color === 'w' ? '♖' : '♜',
-      'q': color === 'w' ? '♕' : '♛',
-      'k': color === 'w' ? '♔' : '♚'
+    const pieceImagePaths = {
+      'p': color === 'w' ? pionAlb : pionNegru,
+      'n': color === 'w' ? caluAlb : caluNegru,
+      'b': color === 'w' ? nebunuAlb : nebunuNegru,
+      'r': color === 'w' ? turaAlba : turaNeagra,
+      'q': color === 'w' ? reginaAlba : reginaNeagra,
+      'k': color === 'w' ? regeAlb : regeNegru
     };
-    return pieceSymbols[type];
+    
+    return (
+      <img
+        src={pieceImagePaths[type]}
+        alt={`${color}${type}`}
+        className="chess-piece"
+      />
+    );
   };
 
   // Render hostages
@@ -419,6 +454,7 @@ function App() {
             onClick={() => {
               setMode('normal');
               setSelectedPiece(null);
+              setLegalMoveSquare(null);
               setSelectedHostageIndex(null);
               setSelectedSquare(null);
             }}
