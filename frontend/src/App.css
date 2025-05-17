@@ -2,9 +2,7 @@
 .App {
   text-align: center;
   font-family: Arial, sans-serif;
-  max-width: 1200px;
   margin: 0 auto;
-  padding: 20px;
 }
 
 .game-container {
@@ -12,6 +10,10 @@
   justify-content: space-between;
   align-items: flex-start;
   margin: 20px 0;
+  background-color: #ffffff;
+  background-attachment: fixed; 
+  background-repeat: no-repeat;
+  background-size: cover;
 }
 
 .left-panel, .center-panel, .right-panel {
@@ -51,7 +53,7 @@
 }
 
 .selected {
-  background-color: #7fc97f;
+  background-color: #74ff78;
 }
 
 .piece {
