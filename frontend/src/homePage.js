@@ -48,9 +48,7 @@ const HomePage = ({ onGameStart }) => {
           <div className="chess-piece bishop" ref={addPieceRef}></div>
           <div className="chess-piece pawn" ref={addPieceRef}></div>
         </div>
-        
-        <div className="board-pattern"></div>
-        
+                
         <h2 className="welcome-text">Welcome to the ultimate chess experience</h2>
         
         <div className="game-modes">
