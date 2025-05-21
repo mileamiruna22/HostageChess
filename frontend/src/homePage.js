@@ -61,11 +61,12 @@ const HomePage = ({ onGameStart }) => {
           </button>
           <button 
             className="game-mode-btn" 
-            onClick={() => onGameStart('computer')}
+            onClick={() => onGameStart('ai')}
           >
             <div className="btn-icon computer-icon"></div>
             <span>Play against Computer</span>
           </button>
+
         </div>
         
         <div className="footer">
