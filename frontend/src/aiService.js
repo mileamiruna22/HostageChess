@@ -1,6 +1,4 @@
-// aiService.js
-const API_BASE_URL = 'http://localhost:5000'; // Modificat portul la 5000 pentru Flask
-
+const API_BASE_URL = 'http://localhost:5000'; 
 const aiService = {
     startNewAIGame: async (playerColor, difficulty) => {
         try {
@@ -66,7 +64,29 @@ const aiService = {
             console.error('Eroare la aiExchangeHostage:', error);
             throw error;
         }
-    }
+    },
+
+    resetGame: async (gameId) => {
+        try {
+            const response = await fetch(`${API_BASE_URL}/reset_game`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ game_id: gameId }),
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json().catch(() => {});
+                throw new Error(errorData?.error || 'Eroare la resetarea jocului');
+            }
+
+            return await response.json();
+        } catch (error) {
+            console.error('Eroare la resetGame:', error);
+            throw error;
+        }
+    },
 };
 
 export default aiService;
