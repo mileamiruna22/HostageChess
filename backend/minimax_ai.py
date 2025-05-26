@@ -525,7 +525,5 @@ class MinimaxAI:
                 if piece and piece.color == (chess.WHITE if color == 'w' else chess.BLACK):
                     score += 10
         
-        # Bonus pentru atacarea pieselor inamice
-        # (aceasta ar trebui extinsă pentru fiecare tip de piesă)
-        
+       
         return score
