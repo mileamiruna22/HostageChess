@@ -57,7 +57,6 @@ function App() {
         setGame(new Chess(response.fen));
         setCurrentPlayer('w'); // Albul începe
         setStatus('White to move. You play as White.');
-        
         // Nu facem mutare AI la început pentru că albul mută primul
       } catch (error) {
         console.error('Eroare la pornirea jocului AI:', error);
@@ -73,7 +72,7 @@ function App() {
     resetGame();
   }, []);
 
-  const resetGame = () => {
+    const resetGame = () => {
     const newGame = new Chess();
     setGame(newGame);
     setSelectedSquare(null);
@@ -144,7 +143,11 @@ function App() {
             // Sincronizează mutarea cu backend-ul
             let backendResponse = null;
             if (vsAI && gameId) {
-              backendResponse = await syncMoveWithBackend(move.from + move.to + (move.promotion || ''));
+              const result = await syncMoveWithBackend(move.from + move.to + (move.promotion || ''));
+                   if (!result) {
+                   alert("Move failed! Try again.");
+                    return;
+                    }
             }
 
             // Actualizează ostaticii dacă există captură
@@ -212,7 +215,7 @@ function App() {
         setSelectedPiece(null);
         setSelectedHostageIndex(null);
         setCurrentPlayer(currentPlayer === 'w' ? 'b' : 'w');
-        setStatus(`${currentPlayer === 'w' ? 'Black' : 'White'} to move.`);
+        setStatus(`${currentPlayer === 'w' ? 'White' : 'Black'} to move.`);
       }
     }
   };
@@ -348,7 +351,7 @@ function App() {
       setMode('normal');
       setSelectedPiece(null);
       setSelectedHostageIndex(null);
-      setStatus(`You exchanged a piece. ${vsAI ? 'AI to move.' : (currentPlayer === 'w' ? 'Black' : 'White') + ' to move.'}`);
+      setStatus(`You exchanged a piece. ${vsAI ? 'AI to move.' : (currentPlayer === 'w' ? 'White' : 'Black') + ' to move.'}`);
       
       if (!vsAI) {
         setCurrentPlayer(currentPlayer === 'w' ? 'b' : 'w');
@@ -367,6 +370,11 @@ function App() {
       setSelectedHostageIndex(null);
     }
   };
+
+
+
+
+
 
   const getPieceName = (type) => {
     const pieceNames = { 'p': 'Pawn', 'n': 'Knight', 'b': 'Bishop', 'r': 'Rook', 'q': 'Queen', 'k': 'King' };
@@ -388,43 +396,66 @@ function App() {
       if (vsAI) {
         setStatus(currentPlayer === playerColor ? 'Your turn (White).' : 'AI thinking...');
       } else {
-        setStatus(`${currentPlayer === 'w' ? 'White' : 'Black'} to move.`);
+        setStatus(`${currentPlayer === 'w' ? 'Black' : 'White'} to move.`);
       }
     }
   };
 
   const renderBoard = () => {
-    const squares = [];
-    const files = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'];
-    const ranks = ['8', '7', '6', '5', '4', '3', '2', '1'];
+  const squares = [];
+  const files = ['a','b','c','d','e','f','g','h'];
+  const ranks = ['8','7','6','5','4','3','2','1'];
 
-    for (let r = 0; r < 8; r++) {
-     squares.push(<div key={`corner-bottom-${r}`} className="label corner"></div>);
+  for (let r = 0; r < 8; r++) {
+    squares.push(
+      <div key={`corner-left-${r}`} className="label corner" />
+    );
 
-      for (let f = 0; f < 8; f++) {
-        const square = files[f] + ranks[r];
-        const piece = game.get(square);
-        const isSelected = selectedSquare === square;
-        const isLight = (r + f) % 2 === 0;
-        const isLegalMoveSquare = legalMoves.includes(square);
-        squares.push(
-          <div
-            key={square}
-            className={`square ${isLight ? 'light' : 'dark'} ${isSelected ? 'selected' : ''} ${isLegalMoveSquare ? 'selected' : ''}`}
-            onClick={() => handleSquareClick(square)}
-          >
-            {piece && <div className="piece">{renderPiece(piece.type, piece.color)}</div>}
-          </div>
-        );
-      }
-      squares.push(<div key="corner-bottom" className="label corner"></div>);
+    for (let f = 0; f < 8; f++) {
+      const coord = files[f] + ranks[r];
+      const piece = game.get(coord);
+      const isSelected = selectedSquare === coord;
+      const isLight = (r + f) % 2 === 0;
+      const isLegalMove = legalMoves.includes(coord);
+
+      squares.push(
+        <div
+          key={`square-${coord}`}
+          className={`square ${isLight ? 'light' : 'dark'}${isSelected ? ' selected' : ''}${isLegalMove ? ' selected' : ''}`}
+          onClick={() => handleSquareClick(coord)}
+        >
+          {piece && (
+            <div className="piece">
+              {renderPiece(piece.type, piece.color)}
+            </div>
+          )}
+        </div>
+      );
     }
-    for (let f = -1; f < 8; f++) {
-      squares.push(<div key={`bottom-${files[f]}`} className="label file">{files[f]}</div>);
-    }
 
-    return <div className="board">{squares}</div>;
-  };
+    squares.push(
+      <div key={`corner-right-${r}`} className="label corner" />
+    );
+  }
+
+  // Bottom row labels (-1 to 8 to include corners)
+  for (let f = -1; f <= 8; f++) {
+    if (f === -1 || f === 8) {
+      squares.push(
+        <div key={`file-corner-${f}`} className="label corner" />
+      );
+    } else {
+      squares.push(
+        <div key={`file-${files[f]}`} className="label file">
+          {files[f]}
+        </div>
+      );
+    }
+  }
+
+  return <div className="board">{squares}</div>;
+};
+
 
   const renderPiece = (type, color) => {
     const pieceImagePaths = {
